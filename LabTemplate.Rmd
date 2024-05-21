@@ -1,0 +1,131 @@
+---
+title: "Demo Markdown Document"
+author: YourNameHere
+date: '`r format(Sys.time(), "%Y-%m-%d %H:%M")`'
+output: 
+  html_document:
+    code_folding: show
+    theme: cerulean
+    number_sections: true
+    highlight: monochrome
+    fig_width: 7
+    fig_height: 4
+    toc: true
+    toc_float: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=F)
+```
+
+
+# Background
+
+## Purpose
+
+Describe why you are doing the analysis and any questions/hypotheses you are trying to answer.
+
+## Experimental Methods
+
+Include any important experimental details and/or link to protocols.
+
+## Notes
+
+Include any misc information that would be important to understand in the rest of the document
+
+
+***
+
+# R Setup
+
+## Libraries
+
+Load your libraries here. Version information for writting manuscripst will be included below:
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(qiime2R)
+
+dir.create("figures") # this will create a folder for figures/output that might be necessary
+theme_set(theme_q2r()) # this will ensure that figures are stored with appropriate fonts/aesthetics
+```
+
+## Citation Information
+
+This will be automatically generated based on the libraries loaded.
+
+```{R}
+packages_in_use <- c( sessionInfo()$basePkgs, names( sessionInfo()$loadedOnly ) )
+lapply( X=packages_in_use, FUN=citation) %>%
+  print()
+```
+
+***
+
+# Data Import
+Describe data being loaded, and what it is as below. Embed a copy in its final format in the document using qiime2R::interactive_table()
+
+*Example: mydata is the taxonomy assigned using SILVA 132 for the ASVs which have been filtered to remove unassigned problematic chimeric/noise ASVs*
+
+```{r}
+mydata<-read_tsv("/data/SequencingRuns/2023Sep21_OSCCCBG/processed/all/Output/ASV_d2taxonomy.txt") %>% filter(!is.na(Phylum))
+interactive_table(mydata)
+```
+
+***
+
+# Data Processing
+
+If significant processing of data is required, do that here describing what you are doing. If you have large computations, you may wish to compute them once, and then save them as an RDS file to reload later. To do that, you can use the `eval=F` command within the chunk and the `saveRDS()` and `readRDS()` functions as below. This means in future knits, it the precomputed object will be loaded instead.
+
+```{r,eval=F}
+#lots of computationally heavy work
+saveRDS(mydata, "mydata.RDS")
+```
+
+```{r}
+mydata<-readRDS("mydata.RDS")
+```
+
+
+***
+
+# Analysis
+
+Create a subheading for each meaningful section. Make it clear what question you are trying to answer. Embed a copy of the data used to make any plot in case these are needed later as supplements for manuscripts. Save all plots into `figures/` as pdf documents to allow editing with adobe illustrator. Save figures at final size (ideally 7 inches wide for )
+
+## Phylum distribution
+
+**Question:** Interested in the phylum distribution in our assigned ASVs. Will address through a barplot.
+
+```{r}
+mydata_summarized<-mydata %>% count(Phylum)
+
+interactive_table(mydata_summarized)
+
+mydata_summarized %>%
+  mutate(Prevalence=n/sum(n)*100) %>%
+  arrange(desc(Prevalence)) %>%
+  mutate(Phylum=factor(Phylum, levels=Phylum)) %>%
+  ggplot(aes(x=1, y=Prevalence, fill=Phylum)) +
+  geom_bar(stat="identity") +
+  scale_fill_viridis_d()
+
+ggsave("figures/demofigure.pdf", height=3, width=3.5, useDingbats=F) # save always pdf. 3.5 inches wide would be 1/2 page with, 7 inches full page width. Always save figure with size printed on page in mind. Small figures might only need to be 2 inches wide.
+```
+
+**Conclusions:** As an example, mostly Firmicutes
+
+## Next analysis here
+
+**Question:** here.
+
+```{r}
+#code here
+```
+
+**Conclusions:** here.
+
